@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api import base_router
+from app.core.config import register_middleware
 from app.repositories.database import connect_to_mongo, close_mongo_connection
 
 app = FastAPI()
@@ -7,6 +8,7 @@ app = FastAPI()
 app.add_event_handler("startup", connect_to_mongo)
 app.add_event_handler("shutdown", close_mongo_connection)
 app.include_router(base_router.router)
+register_middleware(app)
 
 @app.get("/")
 def read_root():

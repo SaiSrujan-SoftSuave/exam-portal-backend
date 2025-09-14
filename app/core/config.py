@@ -1,7 +1,11 @@
 import logging
+import time
 
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 
 load_dotenv()
 
@@ -16,3 +20,33 @@ class Config(BaseSettings):
 config = Config()
 
 logger = logging.getLogger("uvicorn")
+
+
+def register_middleware(app: FastAPI):
+    """
+    Register middleware for logging and token validation.
+    :param app: FastAPI instance
+    :return: None
+    """
+
+    @app.middleware("http")
+    async def custom_logging(request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        processing_time = time.time() - start_time
+        message = (
+            f"{request.client.host}:{request.client.port} - {request.method} "
+            f"- {request.url.path} - {response.status_code} completed after {processing_time:.2f}s"
+        )
+        print(message)
+
+        return response
+
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_credentials=True,
+    )
